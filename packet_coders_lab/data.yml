@@ -1,0 +1,74 @@
+---
+leaf-01:
+  loopback0: 192.168.10.21/32
+  interfaces:
+    - name: Ethernet1
+      description: "link to spine-01"
+    - name: Ethernet2
+      description: "link to spine-02"
+leaf-02:
+  loopback0: 192.168.10.22/32
+  interfaces:
+    - name: Ethernet1
+      description: "link to spine-01"
+    - name: Ethernet2
+      description: "link to spine-02"
+leaf-03:
+  loopback0: 192.168.10.23/32
+  interfaces:
+    - name: Ethernet1
+      description: "link to spine-01"
+    - name: Ethernet2
+      description: "link to spine-02"
+leaf-04:
+  loopback0: 192.168.10.24/32
+  interfaces:
+    - name: Ethernet1
+      description: "link to spine-01"
+    - name: Ethernet2
+      description: "link to spine-02"
+leaf-05:
+  loopback0: 192.168.10.25/32
+  interfaces:
+    - name: Ethernet1
+      description: "link to spine-01"
+    - name: Ethernet2
+      description: "link to spine-02"
+leaf-06:
+  loopback0: 192.168.10.26/32
+  interfaces:
+    - name: Ethernet1
+      description: "link to spine-01"
+    - name: Ethernet2
+      description: "link to spine-02"
+
+spine-01:
+  loopback0: 192.168.10.11/32
+  interfaces:
+    - name: Ethernet1
+      description: "Link to Leaf-01"
+    - name: Ethernet2
+      description: "Link to Leaf-02"
+    - name: Ethernet3
+      description: "Link to Leaf-03"
+    - name: Ethernet4
+      description: "Link to Leaf-04"
+    - name: Ethernet5
+      description: "Link to Leaf-05"
+    - name: Ethernet6
+      description: "Link to Leaf-06"
+spine-02:
+  loopback0: 192.168.10.12/32
+  interfaces:
+    - name: Ethernet1
+      description: "Link to Leaf-01"
+    - name: Ethernet2
+      description: "Link to Leaf-02"
+    - name: Ethernet3
+      description: "Link to Leaf-03"
+    - name: Ethernet4
+      description: "Link to Leaf-04"
+    - name: Ethernet5
+      description: "Link to Leaf-05"
+    - name: Ethernet6
+      description: "Link to Leaf-06"

@@ -1,0 +1,6 @@
+interface loopback 0
+ ip address {{loopback["ip"]}} {{loopback["subnet"]}}	
+!
+interface loopback 0
+ ip address {{loopback.ip}} {{loopback.subnet}}
+ {{loopback.state|default("shutdown")}}

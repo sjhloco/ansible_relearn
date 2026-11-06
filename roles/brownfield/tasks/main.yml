@@ -1,0 +1,6 @@
+- name: Configuration not yet automated
+  ansible.builtin.copy:
+    src: "unmanaged/{{ inventory_hostname }}/brown.static"
+    dest: "{{ host_tmpdir }}/z_brown.conf"
+  changed_when: false
+  check_mode: false

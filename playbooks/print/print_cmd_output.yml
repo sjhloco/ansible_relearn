@@ -1,0 +1,30 @@
+- name: Run show commands on Cisco switches
+  hosts: cisco
+  tasks:
+    - name: Run show commands
+      cisco.ios.ios_command:
+        commands:
+          - show version
+          - show ip interface brief
+      register: cli_output
+
+- name: Run show commands on Arista switches
+  hosts: arista
+  tasks:
+    - name: Run show commands
+      arista.eos.eos_command:
+        commands:
+          - show version
+          - show ip interface brief
+      register: cli_output
+
+- name: Display results for all switches
+  hosts: all
+  tasks:
+    - name: Display result
+      ansible.builtin.debug:
+        msg:
+          - "show version"
+          - "{{ cli_output.stdout_lines[0] }}"
+          - "show ip interface brief"
+          - "{{ cli_output.stdout_lines[1] }}"

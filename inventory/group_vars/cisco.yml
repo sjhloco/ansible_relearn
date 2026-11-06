@@ -1,0 +1,71 @@
+---
+## Temp will move later
+ansible_user: admin
+ansible_password: admin
+## OS type, used by the transport method
+ansible_network_os: cisco.ios.ios # also works ansible_network_os: ios
+# ansible_network_os: ios
+## Needed for transport of SSH
+ansible_connection: ansible.netcommon.network_cli
+## Unhash if need privileged mode.
+# ansible_become: yes
+# ansible_become_method: enable
+# ansible_become_password: admin
+
+# ntp: # Main dictionary
+#   authenticate: true # Sub-Key of the main dict that is a key:value pair
+#   auth_keys: # The values of this sub-key are lists
+#     - id: 1 # The list consists of  key:value dictionary pairs
+#       secret_hash: "0832494D1B1C113C17125D557B"
+#     - id: 2
+#       secret_hash: "111A1C0605171F27013379767A" # secretKey222
+#   servers: # Another list of key:value dictionary pairs
+#     - ip: "192.0.2.1" # Is a string
+#       key_id: 1 # Is an integer
+#     - ip: "192.0.2.2"
+#       key_id: 2
+
+# cfg/multi_vendor_resource_mod.yml
+l3_cfg:
+  - name: Ethernet0/1
+    ipv4:
+      - address: 10.10.10.2/30
+  - name: Loopback1
+    ipv4:
+      - address: 2.2.2.2/32
+bgp_cfg:
+  as_number: "65002"
+  bgp:
+    router_id:
+      address: 2.2.2.2
+  neighbor:
+    - neighbor_address: 10.10.10.1
+      remote_as: "65001"
+  networks:
+    - address: 2.2.2.2
+      netmask: 255.255.255.255
+
+# cfg/apply_ntp_cfg_from_tmpl.yml
+syslog_servers:
+  - hostname: 10.10.10.50
+  - hostname: 10.10.10.51
+
+# show_parse/napalm.yml
+napalm_provider:
+  hostname: "{{ ansible_host }}"
+  username: "{{ ansible_user }}"
+  password: "{{ ansible_password }}"
+  dev_os: "{{ ansible_network_os.split('.')[-1] }}"
+
+# napalm_merge.yml
+interfaces:
+  - name: "Loopback0"
+    description: "Loopback interface"
+    ips:
+      - "10.0.0.100 255.255.255.255"
+    enabled: true # True or false used to enable or disable interfaces
+  - name: "Ethernet1/1"
+    description: "Link1"
+    ips:
+      - "192.168.1.100 255.255.255.0"
+    enabled: true

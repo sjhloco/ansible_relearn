@@ -1,0 +1,100 @@
+## SHow basic napalm facts
+- name: NAPALM state check
+  hosts: WAN1
+  tags: basic
+  tasks:
+    - name: Get facts, interfaces, LLDP and running config
+      napalm.napalm.napalm_get_facts:
+        dev_os: "{{ ansible_network_os.split('.')[-1] }}"
+        filter:
+          - facts
+          - interfaces
+          - lldp_neighbors
+          - config
+    - name: SYS >> Print napalm facts
+      ansible.builtin.debug:
+        var: ansible_facts
+    - name: Show device basics
+      ansible.builtin.debug:
+        msg: >-
+          {{ ansible_facts['napalm_facts']['hostname'] }}
+          runs {{ ansible_facts['napalm_facts']['os_version'] }}
+    - name: Show interfaces that are down
+      ansible.builtin.debug:
+        msg: "{{ ansible_facts['napalm_interfaces'] | dict2items
+          | selectattr('value.is_up', 'equalto', false)
+          | map(attribute='key') | list }}"
+    - name: Show running config
+      ansible.builtin.debug:
+        var: ansible_facts['napalm_config']['running'] # Can be running, startup or candidate
+
+- name: NAPALM check a route exists
+  hosts: WAN1
+  tags: ip_route
+  tasks:
+    - name: Get route facts
+      napalm.napalm.napalm_get_facts:
+        dev_os: "{{ ansible_network_os.split('.')[-1] }}"
+        filter:
+          - route_to
+        args:
+          route_to: # Key must match the filter name
+            destination: 1.1.1.1
+            protocol: bgp
+            # longer: true                # Also return more-specific prefixes
+
+## Show L3 and routing napalm getters
+- name: NAPALM BGP and IP getters
+  hosts: WAN1
+  tags: routing
+  tasks:
+    - name: Get facts, interfaces, LLDP and running config
+      napalm.napalm.napalm_get_facts:
+        dev_os: "{{ ansible_network_os.split('.')[-1] }}"
+        filter:
+          - "facts"
+          - "interfaces"
+          - "interfaces_ip"
+          - "bgp_neighbors"
+    - name: SYS >> Print napalm facts
+      ansible.builtin.debug:
+        var: ansible_facts
+    - ansible.builtin.debug: # noqa: name[missing]
+        msg: "{{ ansible_facts['napalm_interfaces'] }}"
+
+## Verify BGP peers up
+- name: "Verify BGP peerings"
+  hosts: WAN1
+  tags: bgp
+  tasks:
+    - name: BLK >> BGP check
+      block:
+        - name: "NET >> Checking BGP Peerings"
+          napalm.napalm.napalm_get_facts:
+            dev_os: "{{ ansible_network_os.split('.')[-1] }}"
+            filter: bgp_neighbors
+        - name: "SYS >> Verifying that all configured BGP peerings are up"
+          ansible.builtin.assert:
+            that:
+              - item['value']['is_up'] # Peer status from the nested peer dict
+            fail_msg: "{{ item['key'] }} is down" # Peer IP is the dict key
+            success_msg: "{{ item['key'] }} is up"
+            # quiet: true # Stops assert printing the evaluated vars
+          loop: "{{ ansible_facts.napalm_bgp_neighbors.global.peers | dict2items }}"
+          loop_control:
+            label: "{{ item['key'] }}" # Only show the peer IP per loop
+
+## Check ASA getters - !! wont work with ASAv as no port-channel so breaks facts
+- name: ASA liveness
+  hosts: ASA
+  tags: asa
+  tasks:
+    - name: "NET >> ASA REST API reachable (napalm)"
+      napalm.napalm.napalm_get_facts:
+        dev_os: "{{ ansible_network_os.split('.')[-1] }}"
+        filter: facts
+      register: asa_facts
+
+    - name: "SYS >> Show model and version"
+      ansible.builtin.debug:
+        msg: "{{ ansible_facts['napalm_model'] }} {{ ansible_facts['napalm_os_version'] }}"

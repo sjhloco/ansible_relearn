@@ -1,0 +1,7 @@
+- name: SYS >> Create the file structure
+  hosts: arista
+  tasks:
+    - name: Create directory
+      ansible.builtin.file: path="/tmp/results" state=absent # noqa: no-free-form
+      run_once: true # noqa: run-once[task]
+      delegate_to: localhost

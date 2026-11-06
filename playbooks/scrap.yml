@@ -1,0 +1,9 @@
+---
+- name: Create directory
+  hosts: localhost
+  tasks:
+    - name: Clean up config directory (conditional)
+      ansible.builtin.file: path=configs state=absent # noqa: no-free-form
+      when: config_cleanup is defined
+    - name: Create config directory
+      ansible.builtin.file: path=configs state=directory # noqa: no-free-form

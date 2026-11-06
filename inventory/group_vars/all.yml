@@ -1,0 +1,3 @@
+ntp_servers:
+  - server: 10.10.10.13
+  - server: 10.10.10.14

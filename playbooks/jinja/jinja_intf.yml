@@ -1,0 +1,19 @@
+---
+- name: Create interface configuration and print to screen
+  hosts: localhost
+  # Loads var file when play starts, alternatively at runtime ansible-playbook render.yml -e @inventory/my_vars.yml
+  vars_files:
+    - "{{ playbook_dir }}/../../inventory/my_vars.yml"
+  tasks:
+    # This loads the file when the task runs, not when the play starts (useful when the filename depends on another variable)
+    # - ansible.builtin.include_vars:
+    #     ansible.builtin.file: "{{ site }}.yml"
+    ## Render Jinja and save to file
+    - name: Render template to a file
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../../templates/intf.j2" # noqa: no-relative-paths
+        dest: "{{ playbook_dir }}/../../configs/intf.cfg"
+    ## Render and print to screen
+    - name: Print rendered template
+      ansible.builtin.debug:
+        msg: "{{ lookup('template', playbook_dir ~ '/../../templates/intf.j2') }}"

@@ -1,0 +1,22 @@
+- name: Test OSPF Neighbor State
+  hosts: arista_switches
+  gather_facts: false
+  tasks:
+  # Runs show ip ospf neighbor on each switch and registers it as variable called `result`
+  - name: Get OSPF neighbor output
+    arista.eos.eos_command:
+      commands: show ip ospf neighbor
+    register: result
+  # Uses the newly created variables to assert correct number of OSPF neighbors
+  - name: Verify all expected OSPF neighbors are FULL
+    ansible.builtin.assert:
+      that:
+        - full_neighbor_count == expected_count
+      fail_msg: "FAILED: Expected {{ expected_count }} FULL neighbors, but found {{ full_neighbor_count }} on {{ inventory_hostname }}."
+      success_msg: "PASSED: Found correct number of FULL neighbors ({{ expected_count }}) on {{ inventory_hostname }}."
+    # Creates new variables from the specific conditional logic
+    vars:
+      # Parses the output to find the number of FULL neighbors (anything containing FULL, makes a list, gets the length of that list)
+      full_neighbor_count: "{{ result.stdout_lines[0] | select('contains', 'FULL') | list | length }}"
+      # Gets length of number of neighbors based on the topology (conditional if spine or leaf)
+      expected_count: "{{ groups['leaf'] | length if inventory_hostname in groups['spine'] else groups['spine'] | length }}"

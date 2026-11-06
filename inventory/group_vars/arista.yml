@@ -1,0 +1,59 @@
+---
+## Temp will move later
+ansible_user: admin
+ansible_password: admin
+# ansible_password: !vault |
+#           $ANSIBLE_VAULT;1.1;AES256
+#           66653362333230653836333230633030353032373930346262323363303363343233386634343463
+#           3437373534626564653036626536653433643338363930630a316237643836646162393361643531
+#           30653830663965306632613033613138333132346431393865353763646464616666383331613437
+#           3066663337623132660a383531393965376161373132613563363464333530653661333337316134
+#           3232
+## OS type, used by the transport method
+ansible_network_os: arista.eos.eos # Also works ansible_network_os: eos
+## Needed for transport of SSH
+ansible_connection: ansible.netcommon.network_cli
+## For transport of API
+# ansible_connection: httpapi
+# ansible_httpapi_use_ssl: true
+# ansible_httpapi_validate_certs: false
+## Unhash if need privileged mode.
+# ansible_become: true
+# ansible_become_method: enable
+# ansible_become_password: admin
+
+## Variables to use in playbook
+command: show running-config
+## Variables in config
+l3_cfg:
+  - name: Ethernet1
+    ipv4:
+      - address: 10.10.10.1/30
+  - name: Loopback1
+    ipv4:
+      - address: 1.1.1.1/32
+bgp_cfg:
+  as_number: "65001"
+  router_id: 1.1.1.1
+  neighbor:
+    - neighbor_address: 10.10.10.2
+      remote_as: "65002"
+  networks:
+    - address: 1.1.1.1/32
+
+syslog_servers:
+  - name: "10.10.10.50"
+  - name: 10.10.10.51
+
+# napalm_merge.yml
+interfaces:
+  - name: "Loopback0"
+    description: "Loopback interface"
+    ips:
+      - "10.0.0.200/32"
+    enabled: true # True or false used to enable or disable interfaces
+  - name: "Ethernet2"
+    description: "Link1"
+    ips:
+      - "192.168.1.101/24"
+    enabled: true

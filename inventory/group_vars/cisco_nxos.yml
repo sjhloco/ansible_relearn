@@ -1,0 +1,12 @@
+---
+## Temp will move later
+ansible_user: admin
+ansible_password: C1sco12345
+## OS type, used by the transport method
+ansible_network_os: cisco.nxos.nxos # also works ansible_network_os: ios
+## Needed for transport of SSH
+ansible_connection: ansible.netcommon.network_cli
+## Unhash if need privileged mode.
+# ansible_become: yes
+# ansible_become_method: enable
+# ansible_become_password: admin

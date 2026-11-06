@@ -1,0 +1,108 @@
+- name: "Get VLANs"
+  hosts: L2-SW1
+  tags: gather
+  tasks:
+    - name: NET >> Get all VLANs
+      cisco.ios.ios_vlans:
+        state: gathered
+      register: vlans
+    - name: SYS >> Print VLANs
+      ansible.builtin.debug: var=vlans["gathered"] # noqa: no-free-form
+
+- name: "Configure VLANs"
+  hosts: L2-SW1
+  tags: merge
+  vars:
+    list_vlans:
+      - vlan_id: 110
+        name: VL110_COMPUTE
+      - vlan_id: 120
+        name: VL120_BACKUP
+    dict_vlans:
+      10: VL10_DATA
+      20: VL20_VOICE
+  tasks:
+    - name: NET >> Configure VLANs from dict
+      cisco.ios.ios_vlans:
+        config: "{{ list_vlans }}"
+        state: merged
+    - name: NET >> Configure VLANs from list
+      cisco.ios.ios_vlans:
+        config: "{{ dict_vlans | dict2items(key_name='vlan_id', value_name='name') }}"
+        state: merged
+
+- name: "Update VLANs"
+  hosts: L2-SW1
+  tags: replace
+  vars:
+    list_vlans:
+      - vlan_id: 110
+        name: VL110_COMPUTE
+  tasks:
+    - name: NET >> Update the VLAN config
+      cisco.ios.ios_vlans:
+        config: "{{ list_vlans }}"
+        state: replaced
+      register: vlan_output
+    - name: SYS >> Print expected outcome of the change
+      ansible.builtin.debug: var=vlan_output["commands"] # noqa: no-free-form
+      when: ansible_check_mode
+    - name: SYS >> Print out before/after diff
+      ansible.utils.fact_diff:
+        before: "{{ vlan_output['before'] }}"
+        after: "{{ vlan_output['after'] | default(vlan_output['before']) }}"
+
+- name: "Declare VLANs"
+  hosts: L2-SW1
+  tags: declare
+  vars:
+    list_vlans:
+      - vlan_id: 10
+        name: VL10_DATA
+      - vlan_id: 20
+        name: VL20_VOICE
+  tasks:
+    - name: NET >> Declare the VLAN config
+      cisco.ios.ios_vlans:
+        config: "{{ list_vlans }}"
+        state: overridden
+      register: vlan_output
+    - name: SYS >> Print expected outcome of the change
+      ansible.builtin.debug: var=vlan_output["commands"] # noqa: no-free-form
+      when: ansible_check_mode
+    - name: SYS >> Print out before/after diff
+      ansible.utils.fact_diff:
+        before: "{{ vlan_output['before'] }}"
+        after: "{{ vlan_output['after'] | default(vlan_output['before']) }}"
+
+- name: Delete VLANs
+  hosts: L2-SW1
+  tags: deleted
+  vars:
+    delete_vlans:
+      - vlan_id: 110
+      - vlan_id: 120
+
+  tasks:
+    - name: SYS >> Safety check - refuse an empty list
+      ansible.builtin.assert:
+        that:
+          - delete_vlans | length > 0
+        fail_msg: "delete_vlans is empty - this would delete ALL VLANs. Stopping."
+
+    - name: NET >> Delete listed VLANs
+      cisco.ios.ios_vlans:
+        config: []
+        state: deleted
+      register: vlan_output
+
+    - name: SYS >> Dry run - commands that would be sent
+      ansible.builtin.debug:
+        var: vlan_output['commands']
+      when: ansible_check_mode
+
+    - name: SYS >> Real run - before/after diff
+      ansible.utils.fact_diff:
+        before: "{{ vlan_output['before'] }}"
+        after: "{{ vlan_output['after'] | default(vlan_output['before']) }}"
+      when: not ansible_check_mode

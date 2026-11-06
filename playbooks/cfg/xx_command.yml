@@ -1,0 +1,30 @@
+## Sending show commands with cli_command and platform_command
+# - name: Use cli_command to run cmds on all vendors
+#   hosts: WAN1:ISP1
+#   vars:
+#     show_cmds:
+#       - show ip arp
+#       - show ip interface brief
+#   tasks:
+#     - name: Run platform-specific show commands
+#       ansible.netcommon.cli_command:
+#         command: "{{ item }}"
+#       loop: "{{ show_cmds }}"
+#       register: cli_output
+#     - name: Show output of first command
+#       ansible.builtin.debug:
+#         var: cli_output['results'][1]['stdout_lines'] # Without loop is cli_output['stdout'] need cli_output['results'][N]['stdout'] one entry per cmd
+
+- name: Use ios_command to run cmds on all vendors
+  hosts: WAN1
+  vars:
+    show_cmds:
+      - show ip arp
+      - show ip interface brief
+  tasks:
+    - cisco.ios.ios_command: # noqa: name[missing] no-free-form
+        commands: "{{ show_cmds }}"
+      register: cli_output
+    - name: Show output of first command
+      ansible.builtin.debug:
+        var: cli_output.stdout_lines[1] # Will be a list, for example [1] prints 2nd command

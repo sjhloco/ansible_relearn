@@ -1,0 +1,24 @@
+all:
+  children:
+    arista_switches:
+      children:
+        spine:
+          hosts:
+            spine-01:
+              ansible_host: 192.168.255.11
+            spine-02:
+              ansible_host: 192.168.255.12
+        leaf:
+          hosts:
+            leaf-01:
+              ansible_host: 192.168.255.21
+            leaf-02:
+              ansible_host: 192.168.255.22
+            leaf-03:
+              ansible_host: 192.168.255.23
+            leaf-04:
+              ansible_host: 192.168.255.24
+            leaf-05:
+              ansible_host: 192.168.255.25
+            leaf-06:
+              ansible_host: 192.168.255.26

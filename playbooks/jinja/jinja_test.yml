@@ -1,0 +1,6 @@
+---
+- hosts: WAN1 # noqa: name[play]
+  tasks:
+    ## Render and print to screen
+    - name: Print rendered template
+      ansible.builtin.debug: msg={{ passwords.keys() | sort | join(",") }} # noqa: no-free-form

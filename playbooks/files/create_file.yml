@@ -1,0 +1,8 @@
+- name: SYS >> Create a file
+  hosts: arista # Could have alternatively used hosts: localhost
+  tasks:
+    - name: Create file
+      # Recreates the file
+      ansible.builtin.file: path=/tmp/version_report.txt state=touch # noqa: no-free-form
+      delegate_to: localhost
+      run_once: true # noqa: run-once[task]

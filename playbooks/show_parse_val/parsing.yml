@@ -1,0 +1,125 @@
+## ntc-template to parse both Arista and Cisco output, although Arista BGP TextFSM template is broke
+- name: Print ntc-templates TextFSM parsed structured data
+  hosts: WAN1
+  tags: textfsm
+  tasks:
+    - name: NET >> Parse show ip interface brief
+      ansible.utils.cli_parse:
+        command: show ip interface brief
+        parser:
+          name: ansible.netcommon.ntc_templates
+        set_fact: intf_brief
+    - name: SYS >> Show parsed interfaces
+      ansible.builtin.debug: var=ansible_facts["intf_brief"] # noqa: no-free-form
+    - name: NET >> Parse BGP summary
+      ansible.utils.cli_parse:
+        command: show ip bgp summary
+        parser:
+          name: ansible.netcommon.ntc_templates
+        set_fact: bgp_summary
+    - name: SYS >> Show parsed BGP
+      ansible.builtin.debug: var=ansible_facts["bgp_summary"] # noqa: no-free-form
+    - name: SYS >> Assert all BGP neighbours are up
+      ansible.builtin.assert:
+        that:
+          - item['state_or_prefixes_received'] is match('^\d+$')
+        fail_msg: "{{ item['bgp_neighbor'] }} is {{ item['state_or_prefixes_received'] }}"
+      loop: "{{ ansible_facts['bgp_summary'] }}"
+      loop_control:
+        label: "{{ item['bgp_neighbor'] }}"
+
+## Pyats to parse Cisco output
+- name: Print pyATS parsed structured data
+  hosts: WAN1
+  tags: pyats
+  tasks:
+    - name: NET >> Parse show ip interface brief
+      ansible.utils.cli_parse:
+        command: show ip interface brief
+        parser:
+          name: ansible.netcommon.pyats
+          os: iosxe
+        set_fact: intf_brief
+    - name: SYS >> Show parsed interfaces
+      ansible.builtin.debug:
+        var: ansible_facts['intf_brief']
+    - name: NET >> Parse BGP summary
+      ansible.utils.cli_parse:
+        command: show ip bgp summary
+        parser:
+          name: ansible.netcommon.pyats
+          os: iosxe
+        set_fact: bgp_summary
+    - name: SYS >> Show parsed BGP
+      ansible.builtin.debug:
+        var: ansible_facts['bgp_summary']
+    - name: SYS >> Assert all BGP neighbours are up
+      ansible.builtin.assert:
+        that:
+          - item['value']['address_family']['']['state_pfxrcd'] is match('^[0-9]+$')
+        fail_msg: "{{ item['key'] }} is {{ item['value']['address_family']['']['state_pfxrcd'] }}"
+      loop: "{{ ansible_facts['bgp_summary']['vrf']['default']['neighbor'] | dict2items }}"
+      loop_control:
+        label: "{{ item['key'] }}"
+
+## eos_command | json to parse Arista output
+- name: Print eos_command | json parsed structured data
+  hosts: ISP1
+  tags: eos_cmd
+  tasks:
+    - name: NET >> IP interface brief as JSON (EOS)
+      arista.eos.eos_command:
+        commands:
+          - show ip interface brief | json
+      register: intf_brf
+    - name: SYS >> Show parsed interfaces
+      ansible.builtin.debug:
+        var: intf_brf['stdout'][0]
+    - name: NET >> BGP summary as JSON (EOS)
+      arista.eos.eos_command:
+        commands:
+          - show ip bgp summary | json
+      register: bgp_summary
+    - name: SYS >> Show parsed BGP
+      ansible.builtin.debug:
+        var: bgp_summary['stdout'][0]
+    - name: SYS >> Assert all BGP peers Established
+      ansible.builtin.assert:
+        that:
+          - item['value']['peerState'] == 'Established'
+        fail_msg: "{{ item['key'] }} is {{ item['value']['peerState'] }}"
+      loop: "{{ bgp_summary['stdout'][0]['vrfs']['default']['peers'] | dict2items }}"
+      loop_control:
+        label: "{{ item['key'] }}"
+
+## Ansible utils | json to parse Arista output
+- name: Print utils | json parsed structured data
+  hosts: ISP1
+  tags: utils
+  tasks:
+    - name: "Run command and parse as json"
+      ansible.utils.cli_parse:
+        command: show ip interface brief | json
+        parser:
+          name: ansible.utils.json
+      register: intf_brf
+    - name: SYS >> Show parsed interfaces
+      ansible.builtin.debug:
+        var: intf_brf["parsed"]
+    - name: NET >> BGP summary as JSON (EOS)
+      ansible.utils.cli_parse:
+        command: show ip bgp summary | json
+        parser:
+          name: ansible.utils.json
+      register: bgp_summary
+    - name: SYS >> Show parsed BGP
+      ansible.builtin.debug:
+        var: bgp_summary["parsed"]
+    - name: SYS >> Assert all BGP peers Established
+      ansible.builtin.assert:
+        that:
+          - item['value']['peerState'] == 'Established'
+        fail_msg: "{{ item['key'] }} is {{ item['value']['peerState'] }}"
+      loop: "{{ bgp_summary['parsed']['vrfs']['default']['peers'] | dict2items }}"
+      loop_control:
+        label: "{{ item['key'] }}"

@@ -1,0 +1,10 @@
+---
+## Prints facts for all hosts, automatically uses the appropriate fact module vendor specific collection
+- name: Print ansible_facts
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Show all facts
+      ansible.builtin.debug:
+        var: ansible_facts

@@ -1,0 +1,31 @@
+## RUn commands using napalm cli
+- name: Napalm getters
+  hosts: L2-SW1
+  tags: cli
+  tasks:
+    - name: "NET >> Check what VLANs are on the device"
+      napalm.napalm.napalm_cli:
+        provider: "{{ napalm_provider }}"
+        args:
+          commands:
+            - show version
+            - show vlan
+      register: output
+    - ansible.builtin.debug: var=output.cli_results['show vlan'] # noqa: name[missing] no-free-form
+
+- name: Distributed ping
+  hosts: WAN1:ISP1
+  tags: ping
+  tasks:
+    - name: NET >> Pinging stuff
+      napalm.napalm.napalm_ping: # The napalm module to use
+        dev_os: "{{ ansible_network_os.split('.')[-1] }}"
+        destination: "{{ d }}" # Variables to be passed into the module, are others like source interface, vrf, etc
+        count: 3 # Default 5
+        ping_timeout: 1 # Per-packet timeout; 'timeout' is the connection timeout
+        optional_args:
+          read_timeout_override: 30. # Passed to netmiko, overrides the 10 s default
+      register: ping
+    - name: "Ping results towards {{ d }}"
+      ansible.builtin.debug:
+        msg: "{{ ping }}"

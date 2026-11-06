@@ -1,0 +1,10 @@
+---
+- name: Create loopback config and save to file
+  hosts: WAN1
+  connection: local
+  tasks:
+    ## Render Jinja and save to file
+    - name: Render template to a file
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../../templates/intf_lp.j2" # noqa: no-relative-paths
+        dest: "{{ playbook_dir }}/../../configs/intf_lp.cfg"

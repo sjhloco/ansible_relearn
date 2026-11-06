@@ -1,0 +1,14 @@
+- name: SYS >> Create the file structure
+  hosts: arista
+  tasks:
+    - name: "SYS >> Creating file structure"
+      ansible.builtin.file: path="/tmp/results/{{ item }}" state=directory # noqa: no-free-form
+      changed_when: false # Stops it reporting changes in playbook summary
+      loop:
+        [
+          reports,
+          diff,
+          "{{ inventory_hostname }}/config",
+          "{{ inventory_hostname }}/validate",
+        ]
+      delegate_to: localhost

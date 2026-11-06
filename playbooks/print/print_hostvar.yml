@@ -1,0 +1,20 @@
+---
+# All default and custom variables for all hosts
+- name: Get variables of all inventory devices
+  hosts: localhost
+  tasks:
+    - ansible.builtin.debug: var=hostvars # noqa: name[missing] no-free-form
+# Specific Arista default and custom variable
+- name: "Get specific Arista default and custom variable (can only debug 1 var per line)"
+  hosts: arista
+  tasks:
+    - ansible.builtin.debug: var=inventory_hostname # noqa: name[missing] no-free-form
+    - ansible.builtin.debug: var=command # noqa: name[missing] no-free-form
+    - ansible.builtin.debug: msg="{{ inventory_hostname }} - {{ command }}" # noqa: name[missing] no-free-form
+    # Does same thing, differences is that this is the Ansible recommended way
+    - ansible.builtin.debug: # noqa: name[missing]
+        var: inventory_hostname
+    - ansible.builtin.debug: # noqa: name[missing]
+        var: command
+    - ansible.builtin.debug: # noqa: name[missing]
+        msg: "{{ inventory_hostname }} - {{ command }}"

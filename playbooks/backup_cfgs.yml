@@ -1,0 +1,91 @@
+##### All the different methods to backup the running config #####
+- name: "Backing up Devices"
+  # hosts: ISP1
+  hosts: ISP1:WAN1
+  vars:
+    file_path: /tmp/results/configs
+    # file_path: /Users/ste/Desktop/configs
+  tasks:
+    ## Cleanup and create new backup directory
+    - name: SYS >> Create backup directory
+      delegate_to: localhost
+      run_once: true # noqa: run-once[task]
+      block:
+        - name: SYS >> Delete directory
+          ansible.builtin.file: path={{ file_path }} state=absent # noqa: no-free-form
+          changed_when: false # No change reported in summary
+        - name: SYS >> Make backup directory
+          ansible.builtin.file: path={{ file_path }} state=directory # noqa: no-free-form
+          changed_when: false # No change reported in summary
+
+    ## Ansible netcommon cli_backup
+    - name: NET >> CLI_BACKUP backup running config
+      ansible.netcommon.cli_backup:
+        filename: "{{ inventory_hostname }}_cli_backup.cfg"
+        dir_path: "{{ file_path }}"
+    ## Ansible netcommon net_get (SCP/SFTP copy) - IOS
+    - name: NET >> NET_GET backup running config - IOS
+      ansible.netcommon.net_get:
+        src: system:running-config # or nvram:startup-config
+        dest: "{{ file_path }}/{{ inventory_hostname }}_net_get.cfg"
+      when: ansible_network_os == 'cisco.ios.ios'
+    ## Ansible netcommon net_get (SCP/SFTP copy) - Arista
+    - name: BLK >> NET_GET backup running config - EOS
+      when: ansible_network_os == 'arista.eos.eos'
+      block:
+        - name: NET >> Write running config to flash
+          arista.eos.eos_command:
+            commands:
+              - copy running-config flash:running-backup.cfg
+        - name: NET >> NET_GET backup running config - EOS
+          ansible.netcommon.net_get:
+            src: /mnt/flash/running-backup.cfg # startup can get direct /mnt/flash/startup-config
+            dest: "{{ file_path }}/{{ inventory_hostname }}_net_get.cfg"
+
+    ## platform_config with backup: true - IOS
+    - name: NET >> IOS_CONFIG backup running config - IOS
+      cisco.ios.ios_config:
+        backup: true
+        backup_options:
+          filename: "{{ inventory_hostname }}_platform_config.cfg"
+          dir_path: "{{ file_path }}"
+      when: ansible_network_os == 'cisco.ios.ios'
+    ## platform_config with backup: true - ARISTA
+    - name: NET >> EOS_CONFIG backup running config - EOS
+      arista.eos.eos_config:
+        backup: true
+        backup_options:
+          filename: "{{ inventory_hostname }}_platform_config.cfg"
+          dir_path: "{{ file_path }}"
+      when: ansible_network_os == 'arista.eos.eos'
+
+    ## platform_facts with gather_subset: config - IOS
+    - name: NET >> IOS_FACTS backup running config - IOS
+      cisco.ios.ios_facts:
+        gather_subset:
+          - config
+      when: ansible_network_os == 'cisco.ios.ios'
+    ## platform_facts with gather_subset: config - Arista
+    - name: NET >> IOS_FACTS backup running config - EOS
+      arista.eos.eos_facts:
+        gather_subset:
+          - config
+      when: ansible_network_os == 'arista.eos.eos'
+    # Save ansible_facts config var to file
+    - name: SYS >> Save config to file (platform_facts)
+      ansible.builtin.copy:
+        content: "{{ ansible_facts['net_config'] }}"
+        dest: "{{ file_path }}/{{ inventory_hostname }}_platform_facts.cfg"
+      delegate_to: localhost
+
+    ## napalm_get_facts with filter: config
+    - name: NET >> NAPALM_GET_FACTS backup running config
+      napalm.napalm.napalm_get_facts:
+        dev_os: "{{ ansible_network_os.split('.')[-1] }}"
+        filter:
+          - config
+    - name: SYS >> Save config to file (napalm_get_facts)
+      ansible.builtin.copy:
+        content: "{{ ansible_facts['napalm_config']['running'] }}"
+        dest: "{{ file_path }}/{{ inventory_hostname }}_napalm_get_facts.cfg"
+      delegate_to: localhost

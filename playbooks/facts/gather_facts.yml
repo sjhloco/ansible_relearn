@@ -1,0 +1,100 @@
+## Facts from Windows/Linux devices
+- name: Print facts with "gather_facts"
+  hosts: localhost
+  gather_facts: true
+  gather_subset:
+    - "!min"
+    - network
+  tasks:
+    - ansible.builtin.debug: var=ansible_facts # noqa: name[missing] no-free-form
+
+- name: Print facts with "setup" module
+  hosts: localhost
+  tasks:
+    - name: Get facts from setup module
+      ansible.builtin.setup:
+        gather_subset:
+          - min
+        filter: env
+    - ansible.builtin.debug: var=ansible_facts # noqa: name[missing] no-free-form
+
+## Facts from network devices
+- name: Print facts from IOS/EOS with "gather_facts"
+  hosts: WAN1
+  gather_facts: true
+  gather_subset:
+    - interfaces
+  tasks:
+    - ansible.builtin.debug: var=ansible_facts['net_neighbors'] # noqa: name[missing] no-free-form
+
+- name: Print facts with  IOS-specific facts"
+  hosts: WAN1
+  tasks:
+    - cisco.ios.ios_facts: # noqa: name[missing]
+        gather_subset:
+          - interfaces
+    - ansible.builtin.debug: var=ansible_facts['net_neighbors'] # noqa: name[missing] no-free-form
+
+## Configuration facts from network devices
+- name: Print config facts from IOS with `gather_network_resources`
+  hosts: WAN1
+  tasks:
+    - cisco.ios.ios_facts: # noqa: name[missing]
+        gather_network_resources:
+          - bgp_global
+          - interfaces
+    - ansible.builtin.debug: var=ansible_facts['network_resources']['interfaces'] # noqa: name[missing] no-free-form
+
+## Configuration facts from network devices
+- name: Print all config facts from EOS with `gather_network_resources`
+  hosts: ISP1
+  tasks:
+    - arista.eos.eos_facts: # noqa: name[missing]
+        gather_network_resources:
+          - all
+    - ansible.builtin.debug: var=ansible_facts # noqa: name[missing] no-free-form
+
+## ios_facts vs state: gathered
+- name: Print vlan facts from .ios_facts
+  hosts: L2-SW1
+  tasks:
+    - cisco.ios.ios_facts: # noqa: name[missing]
+        gather_network_resources:
+          - vlans
+    - ansible.builtin.debug: var=ansible_facts['network_resources']['vlans'] # noqa: name[missing] no-free-form
+
+- name: Print vlan facts from .ios_vlans
+  hosts: L2-SW1
+  tasks:
+    - cisco.ios.ios_vlans: # noqa: name[missing]
+        state: gathered
+      register: vlans
+    - ansible.builtin.debug: var=vlans['gathered'] # noqa: name[missing] no-free-form
+
+## Saving facts
+- name: Save facts as JSON
+  hosts: L2-SW1
+  gather_facts: true
+  gather_subset:
+    - all
+  tasks:
+    ## Is saved as JSON but not prettyfied so used jg to view
+    - ansible.builtin.copy: # noqa: name[missing]
+        content: "{{ ansible_facts }}"
+        dest: "/tmp/results/{{ inventory_hostname }}.json"
+      delegate_to: localhost
+    ## Is saved as JSON wiht line spacisngs and indentation
+    - ansible.builtin.copy: # noqa: name[missing]
+        content: "{{ ansible_facts | to_nice_json(indent=2) }}"
+        dest: "/tmp/results/{{ inventory_hostname }}1.json"
+      delegate_to: localhost
+    ## Host_vars are saved as YAML
+    - name: Save host_vars, standard and pretifed
+      delegate_to: localhost
+      block:
+        - ansible.builtin.copy: # noqa: name[missing]
+            content: "{{ hostvars[inventory_hostname] }}"
+            dest: "/tmp/results/{{ inventory_hostname }}.yml"
+        - ansible.builtin.copy: # noqa: name[missing]
+            content: "{{ hostvars[inventory_hostname] | to_nice_yaml(indent=2) }}"
+            dest: "/tmp/results/{{ inventory_hostname }}_pretty.yml"

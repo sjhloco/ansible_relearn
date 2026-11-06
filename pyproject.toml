@@ -1,0 +1,10 @@
+[project]
+name = "ansible-relearn"
+version = "0.1.0"
+description = "Ansible network automation practice playbooks against a Containerlab lab (Cisco IOS, Arista EOS)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ansible-dev-tools",  # ansible-core, ansible-lint, navigator, molecule, etc.
+    "paramiko",           # network_cli SSH (see ansible.cfg, ansible-pylibssh is hard to build on macOS)
+]

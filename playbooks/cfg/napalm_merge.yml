@@ -1,0 +1,47 @@
+- name: "Simple configuration"
+  hosts: ISP1:WAN1
+  vars:
+    conf_dir: "{{ playbook_dir }}/.compiled/" # Location where the temp folder and device configs snippets are stored
+
+  ## Start of the pre-tasks section run before main play, is used to create file struture to save configs in
+  pre_tasks:
+    - name: "Assign tmp folder to host"
+      ansible.builtin.set_fact:
+        host_tmpdir: "{{ conf_dir }}/{{ inventory_hostname }}" # Create fact (temp dir) where generated config is stored
+      changed_when: false # So summary doesn’t on't report changes when create dir
+      check_mode: false # Still makes the directory even if in check mode
+    - name: "Make sure there are no remains from a previous run"
+      ansible.builtin.file:
+        path: "{{ host_tmpdir }}"
+        state: absent # If already exists removes dir to make sure the folder is clean
+      changed_when: false
+      check_mode: false
+    - name: "Create folder to store configurations and diffs for/from the devices"
+      ansible.builtin.file:
+        path: "{{ host_tmpdir }}" # Recreate the directory
+        state: directory
+      changed_when: false
+      check_mode: false
+
+  ## Roles which generate the config snippets
+  roles:
+    - base # Generates base system config (hostname, domain name, etc)
+    - ip # Manages the interface config
+
+  ## Start of the post-tasks section run after the main play, join config files and apply the config
+  post_tasks: # Start of the post-tasks section run after the main play
+    - name: "Assemble all the configuration bits"
+      ansible.builtin.assemble: # Joins all snippets in src dir together in a new file
+        src: "{{ host_tmpdir }}/"
+        dest: "{{ host_tmpdir }}/assembled.conf"
+      changed_when: false
+      check_mode: false
+    - name: "Load configuration into the device"
+      napalm.napalm.napalm_install_config: # Used to deploy the final configuration
+        dev_os: "{{ ansible_network_os.split('.')[-1] }}"
+        config_file: "{{ host_tmpdir }}/assembled.conf" # Config to apply
+        commit_changes: "{{ not ansible_check_mode }}" # Commit the changes only if not running in check mode
+        replace_config: false # As are merging the config, not replacing it
+        get_diffs: true # Prints to CLI the differences between current and new config
+        diff_file: "{{ host_tmpdir }}/diff" # Also saves the differences to file.
+      tags: [print_action] # If stdout_callback = selective will only show in CLI plays with this tag

@@ -1,0 +1,8 @@
+---
+ansible_password: admin
+ansible_become_password: admin
+loopback: { ip: 172.16.0.1, subnet: 255.255.255.255 }
+passwords:
+  user1: pass2
+  user2: pass1
+  user3: pass3

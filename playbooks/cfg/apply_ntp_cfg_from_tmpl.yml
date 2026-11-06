@@ -1,0 +1,14 @@
+- name: Manage NTP configuration # The first play
+  hosts: WAN1 # The play is run on devices in the routers group
+  tasks:
+    - name: Apply NTP updates using jinja2 template
+      cisco.ios.ios_config: # ios_config automatically goes into config t to enter cmds
+        src: "{{ playbook_dir }}/../../templates/ntp.j2" # The template that the config is derived from
+      notify: ntp_was_updated # Calls the handler task
+      register: ntp_updates # Creates a variable of the config output that is by the handler
+
+  handlers: # A great way to print the config that was applied to screen
+    - name: Print changes since NTP was updated
+      listen: ntp_was_updated # The name of the handler, so what it listens for to be called
+      ansible.builtin.debug:
+        var: ntp_updates.updates # Prints the .updates is sub.key of the config  output generated

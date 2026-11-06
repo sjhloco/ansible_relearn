@@ -1,0 +1,6 @@
+- name: NTP and syslog config
+  ansible.builtin.template:
+    src: "base.j2"
+    dest: "{{ host_tmpdir }}/base.conf"
+  changed_when: false
+  check_mode: false

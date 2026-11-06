@@ -1,0 +1,35 @@
+# Python / uv / Virtual environments
+.venv/
+__pycache__/
+*.pyc
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.cache/
+
+# Ansible: installed collections and runtime files
+collections/ansible_collections/
+.ansible/
+*.retry
+# ansible-navigator writes a JSON artifact per run (see save-as in ansible-navigator.yml)
+artifacts/
+
+# Secrets: vault password files, environment files (holding secrets)
+.vault_pass*
+*vault_pass*
+.env
+
+# Claude Code: personal overrides
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Editor / OS
+## Ship settings.json (*.yml as Ansible), ignore any other personal VS Code files
+.vscode/*
+!.vscode/settings.json
+**/.DS_Store
+
+# Log files
+*.log

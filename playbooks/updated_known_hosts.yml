@@ -1,0 +1,33 @@
+---
+- name: Collect and add all SSH keys to known_hosts
+  hosts: all
+  gather_facts: false
+  vars:
+    known_hosts: "~/.ssh/known_hosts"
+  tasks:
+    # Ansible host gets the SSH ket for each inventory host
+    - name: SYS >> Collect SSH host keys
+      command:
+        cmd: "ssh-keyscan -q {{ ansible_host | default(inventory_hostname) }}"
+      register: host_keys
+      changed_when: false
+      delegate_to: localhost
+    # Asserts that it got a key entry
+    - name: SYS >> Check a key came back
+      assert:
+        that: host_keys.stdout | length > 0
+        fail_msg: "No SSH key returned for {{ inventory_hostname }}"
+        quiet: true
+    # Updates known_hosts file, updating keys between start and end banner (removes old entries and replaces)
+    - name: SYS >> Write all keys to known_hosts
+      blockinfile:
+        path: "{{ known_hosts }}"
+        create: true
+        mode: "0600"
+        marker: "##### {mark} This part managed by Ansible #####"
+        block: |
+          {% for h in groups['all'] if hostvars[h].host_keys is defined and hostvars[h].host_keys.stdout is defined %}
+          {{ hostvars[h].host_keys.stdout }}      
+          {% endfor %}
+      delegate_to: localhost
+      run_once: true

@@ -1,0 +1,6 @@
+- name: Interfaces/IP configuration
+  ansible.builtin.template:
+    src: "{{ ansible_network_os.split('.')[-1] }}/ip.j2" # Template that is loaded is picked based on the os variable set in the inventory
+    dest: "{{ host_tmpdir }}/ip.conf"
+  changed_when: false
+  check_mode: false

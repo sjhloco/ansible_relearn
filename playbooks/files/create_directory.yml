@@ -1,0 +1,18 @@
+# Creates an empty file structure
+- name: "Create the file structure"
+  hosts: localhost # As running against the local host don't need run_once or delegate:local
+  tasks:
+    # Create a date fact (variable) that could be used by any other plays in the playbook
+    - name: SYS >> Store and store today's date
+      ansible.builtin.set_fact:
+        date: "{{ now(fmt='%Y-%m-%d') }}"
+    # Creates an empty directory with todays date
+    - name: SYS >> Delete directory
+      # Delete directory if exists
+      ansible.builtin.file: path="/tmp/results/{{ date }}_cfg" state=absent # noqa: no-free-form
+      changed_when: false # No change reported in summary
+      check_mode: false # Runs even if in check mode
+    - name: SYS >> Create directory
+      ansible.builtin.file: path="/tmp/results/{{ date }}_cfg" state=directory # noqa: no-free-form
+      changed_when: false
+      check_mode: false

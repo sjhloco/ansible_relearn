@@ -1,0 +1,24 @@
+- name: NAPALM state check
+  hosts: WAN1
+  tasks:
+    # - name: Get facts, interfaces for validate
+    #   napalm.napalm.napalm_get_facts:
+    #     dev_os: "{{ ansible_network_os.split('.')[-1] }}"
+    #     filter:
+    #       - route_to
+    #     args:
+    #       route_to: # Key must match the filter name
+    #         destination: 1.1.1.1
+    # - name: "Report"
+    #   ansible.builtin.debug:
+    #     var: ansible_facts
+    - name: "Validate deployment"
+      napalm.napalm.napalm_validate:
+        dev_os: "{{ ansible_network_os.split('.')[-1] }}"
+        validation_file: "{{ playbook_dir }}/val_file.yml"
+      register: report
+    - name: "Report"
+      ansible.builtin.debug:
+        msg: "{{ report }}"
+      when: report.compliance_report.complies
+    # msg: "{{ report|to_nice_json }}"

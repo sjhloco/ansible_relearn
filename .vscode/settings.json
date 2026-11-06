@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "**/playbooks/**/*.yml": "ansible",
+        "**/roles/**/*.yml": "ansible",
+        "**/inventory/**/*.yml": "ansible"
+    }
+}

@@ -1,0 +1,38 @@
+- get_facts:
+    hostname: WAN1
+    os_version: 17.15.*
+    interface_list:
+      # _mode: strict
+      list:
+        - Vlan10
+        - Ethernet0/0
+        - Ethernet0/1
+        - Ethernet0/2
+        - Ethernet0/3
+        - Ethernet1/0
+        - Ethernet1/1
+        - Ethernet1/2
+        - Ethernet1/3
+
+- get_bgp_neighbors:
+    global:
+      peers:
+        _mode: strict
+        "10.10.10.1":
+          is_up: true
+          address_family:
+            "ipv4 unicast":
+              received_prefixes: ">0"
+              sent_prefixes: ">0"
+
+- get_route_to:
+    _name: route to r2 # Report key, so the same getter can be used twice
+    _kwargs: # Arguments passed to get_route_to()
+      destination: "1.1.1.1"
+      protocol: bgp # Route must be learnt from BGP
+    "1.1.1.1/32":
+      _mode: strict # Exactly these paths, no extras
+      list:
+        - next_hop: "10.10.10.1"
+      protocol_attributes:
+        as_path: "65001"

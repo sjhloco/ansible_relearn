@@ -1,0 +1,37 @@
+---
+- name: Configure NTP and syslog
+  hosts: WAN1:ISP1
+
+  tasks:
+    - name: NET >> Configure NTP servers
+      ansible.netcommon.network_resource:
+        name: ntp_global
+        config:
+          servers: "{{ ntp_servers }}"
+        state: merged
+      register: ntp_out
+    - name: NET >> Configure syslog servers
+      ansible.netcommon.network_resource:
+        name: logging_global
+        config:
+          hosts: "{{ syslog_servers }}"
+        state: merged
+      register: syslog_out
+
+    - name: SYS >> Commands sent
+      ansible.builtin.debug:
+        msg:
+          l3: "{{ ntp_out['commands'] }}"
+          bgp: "{{ syslog_out['commands'] }}"
+      when: ansible_check_mode
+    - name: BLK >> Print out diff
+      when: not ansible_check_mode
+      block:
+        - name: SYS >> Print out L3 interface before/after diff
+          ansible.utils.fact_diff:
+            before: "{{ ntp_out['before'] }}"
+            after: "{{ ntp_out['after'] | default(ntp_out['before']) }}"
+        - name: SYS >> Print out BGP before/after diff
+          ansible.utils.fact_diff:
+            before: "{{ syslog_out['before'] }}"
+            after: "{{ syslog_out['after'] | default(syslog_out['before']) }}"

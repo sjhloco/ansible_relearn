@@ -1,0 +1,3 @@
+- name: Generate Configuration Files
+  ansible.builtin.template: src=router.j2 dest={{ playbook_dir }}/../../configs/{{ item.hostname }}.cfg # noqa: no-free-form
+  loop: "{{ router_base_cfg }}"

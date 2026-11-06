@@ -1,0 +1,10 @@
+- name: Print command output
+  hosts: ISP1
+  tasks:
+    - arista.eos.eos_command: # noqa: name[missing]
+        commands: show ip int brief
+      register: cli_output
+    # Print output either shorthand and longhand, both produce same result
+    - ansible.builtin.debug: var=cli_output.stdout # noqa: name[missing] no-free-form
+    - ansible.builtin.debug: # noqa: name[missing]
+        var: cli_output.stdout

@@ -1,0 +1,14 @@
+{% for srv in syslog_servers %}
+{% if "ios" in ansible_network_os %}
+logging host {{ srv['hostname'] }}
+{% else %}
+logging host {{ srv['name'] }}
+{% endif %}
+{% endfor %}
+!
+snmp-server community stesworld RO
+snmp-server community stesw0rld RO
+{% for srv in ntp_servers %}
+ntp server {{ srv['server'] }} key 1
+{% endfor %}
+!

@@ -1,0 +1,66 @@
+## Prints all resource modules available for each OS
+- name: Print modules
+  hosts: ISP1:WAN1
+  tags: prt_mod
+  tasks:
+    - name: SYS >> Get all resource modules
+      ansible.netcommon.network_resource:
+      register: output
+    - name: SYS >> Print all resource modules
+      ansible.builtin.debug: var=output["modules"] # noqa: no-free-form
+
+## Prints all configured elements for these modules
+- name: Gather L3 interfaces and BGP from any platform
+  hosts: WAN1:ISP1
+  tags: get_config
+  tasks:
+    - name: NET >> Gather L3 interfaces
+      ansible.netcommon.network_resource:
+        name: l3_interfaces
+        state: gathered
+      register: l3
+
+    - name: NET >> Gather BGP global
+      ansible.netcommon.network_resource:
+        name: bgp_global
+        state: gathered
+      register: bgp
+    - name: SYS >> Show both
+      ansible.builtin.debug:
+        msg:
+          l3_interfaces: "{{ l3['gathered'] }}"
+          bgp_global: "{{ bgp['gathered'] }}"
+
+## Declaratively configures interfaces and BGP
+- name: Configure L3 and BGP on any platform
+  hosts: WAN1:ISP1
+  tasks:
+    - name: NET >> L3 interfaces
+      ansible.netcommon.network_resource:
+        name: l3_interfaces
+        config: "{{ l3_cfg }}"
+        state: merged
+      register: l3_out
+    - name: NET >> BGP global
+      ansible.netcommon.network_resource:
+        name: bgp_global
+        config: "{{ bgp_cfg }}"
+        state: merged
+      register: bgp_out
+    - name: SYS >> Commands sent
+      ansible.builtin.debug:
+        msg:
+          l3: "{{ l3_out['commands'] }}"
+          bgp: "{{ bgp_out['commands'] }}"
+      when: ansible_check_mode
+    - name: BLK >> Print out diff
+      when: not ansible_check_mode
+      block:
+        - name: SYS >> Print out L3 interface before/after diff
+          ansible.utils.fact_diff:
+            before: "{{ l3_out['before'] }}"
+            after: "{{ l3_out['after'] | default(l3_out['before']) }}"
+        - name: SYS >> Print out BGP before/after diff
+          ansible.utils.fact_diff:
+            before: "{{ bgp_out['before'] }}"
+            after: "{{ bgp_out['after'] | default(bgp_out['before']) }}"
